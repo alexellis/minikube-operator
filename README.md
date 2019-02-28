@@ -1,5 +1,20 @@
 # minikube-operator
 
+## Status
+
+This is the port of my [mkaas](https://github.com/alexellis/mkaas) project, which used an early version of the operator-framework. CoreOS made so many changes that the code stopped working all-together, so this repo contains the updated versions.
+
+Goals
+- [x] Port over CRD / operator
+- [x] Update to Kubernetes v1.13
+- [ ] Port over Nginx DaemonSet for accessing the clusters remotely
+
+## Preview
+
+See [my Tweet](https://twitter.com/alexellisuk/status/1101185378277564417) with a Kubernetes cluster booting up on one of my Kubernetes nodes.
+
+![](https://pbs.twimg.com/media/D0gyGAAWwAAiuNE.jpg)
+
 ## Example
 
 ```yaml
@@ -16,7 +31,7 @@ spec:
 
 ## Try it out
 
-Install the pre-reqs from mkaas.
+Install the pre-reqs from [mkaas](https://github.com/alexellis/mkaas).
 
 ```
 git clone git@github.com:alexellis/minikube-operator.git
@@ -47,7 +62,9 @@ You can un-tar it to /root/ and run `kubectl get node`
 Build:
 
 ```bash
-operator-sdk build alexellis2/minikube-operator
-
-docker push alexellis2/minikube-operator:0.1.1
+operator-sdk build alexellis2/minikube-operator:0.2.0
+docker push alexellis2/minikube-operator:0.2.0
 ```
+## License
+
+MIT
