@@ -221,7 +221,7 @@ func newMinikubePod(cr *alexellisv2alpha1.Minikube) *corev1.Pod {
 			Containers: []corev1.Container{
 				{
 					Name:  "libvirt",
-					Image: "alexellis2/libvirt-xenial-minikube:0.4",
+					Image: "alexellis2/libvirt-xenial-minikube:0.5.0",
 					SecurityContext: &corev1.SecurityContext{
 						Privileged: &privileged,
 					},
