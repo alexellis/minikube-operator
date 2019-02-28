@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: minikube-operator
+  namespace: clusters
 spec:
   replicas: 1
   selector:
@@ -16,7 +17,7 @@ spec:
       containers:
         - name: minikube-operator
           # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: alexellis2/minikube-operator:0.1
           command:
           - minikube-operator
           imagePullPolicy: Always

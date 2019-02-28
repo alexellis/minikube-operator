@@ -1,0 +1,7 @@
+apiVersion: alexellis.io/v2alpha1
+kind: Minikube
+metadata:
+  name: example-minikube
+spec:
+  # Add fields here
+  size: 3
