@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	alexellisv2alpha1 "github.com/alexellis/minikube-operator/pkg/apis/alexellis/v2alpha1"
-	"github.com/alexellis/mkaas/pkg/apis/alexellis/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -173,8 +172,8 @@ func newMinikubePod(cr *alexellisv2alpha1.Minikube) *corev1.Pod {
 			Namespace: cr.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(cr, schema.GroupVersionKind{
-					Group:   v1alpha1.SchemeGroupVersion.Group,
-					Version: v1alpha1.SchemeGroupVersion.Version,
+					Group:   alexellisv2alpha1.SchemeGroupVersion.Group,
+					Version: alexellisv2alpha1.SchemeGroupVersion.Version,
 					Kind:    "Minikube",
 				}),
 			},
