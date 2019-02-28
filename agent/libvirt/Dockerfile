@@ -12,7 +12,6 @@ RUN curl -SLO https://github.com/kubernetes/minikube/releases/download/v0.30.0/d
  && mv minikube-linux-amd64 /usr/local/bin/minikube \
  && curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.13.0/bin/linux/amd64/kubectl && chmod +x kubectl && mv kubectl /usr/local/bin/
 
-
 COPY entry.sh	.
 RUN chmod +x ./entry.sh
 
