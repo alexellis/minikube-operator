@@ -13,6 +13,10 @@ type MinikubeSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+
+	MemoryMB    int    `json:"memoryMB"`
+	CPUCount    int    `json:"cpuCount"`
+	ClusterName string `json:"clusterName"`
 }
 
 // MinikubeStatus defines the observed state of Minikube

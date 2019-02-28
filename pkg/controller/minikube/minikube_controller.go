@@ -2,13 +2,16 @@ package minikube
 
 import (
 	"context"
+	"fmt"
 
 	alexellisv2alpha1 "github.com/alexellis/minikube-operator/pkg/apis/alexellis/v2alpha1"
+	"github.com/alexellis/mkaas/pkg/apis/alexellis/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -101,7 +104,7 @@ func (r *ReconcileMinikube) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	// Define a new Pod object
-	pod := newPodForCR(instance)
+	pod := newMinikubePod(instance)
 
 	// Set Minikube instance as the owner and controller
 	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
@@ -129,23 +132,132 @@ func (r *ReconcileMinikube) Reconcile(request reconcile.Request) (reconcile.Resu
 	return reconcile.Result{}, nil
 }
 
-// newPodForCR returns a busybox pod with the same name/namespace as the cr
-func newPodForCR(cr *alexellisv2alpha1.Minikube) *corev1.Pod {
+// // newPodForCR returns a busybox pod with the same name/namespace as the cr
+// func newPodForCR(cr *alexellisv2alpha1.Minikube) *corev1.Pod {
+// 	labels := map[string]string{
+// 		"app": cr.Name,
+// 	}
+// 	return &corev1.Pod{
+// 		ObjectMeta: metav1.ObjectMeta{
+// 			Name:      cr.Name + "-pod",
+// 			Namespace: cr.Namespace,
+// 			Labels:    labels,
+// 		},
+// 		Spec: corev1.PodSpec{
+// 			Containers: []corev1.Container{
+// 				{
+// 					Name:    "busybox",
+// 					Image:   "busybox",
+// 					Command: []string{"sleep", "3600"},
+// 				},
+// 			},
+// 		},
+// 	}
+// }
+
+func newMinikubePod(cr *alexellisv2alpha1.Minikube) *corev1.Pod {
 	labels := map[string]string{
-		"app": cr.Name,
+		"app": cr.ObjectMeta.Name + "-minikube",
 	}
+	privileged := true
+	propagate := corev1.MountPropagationHostToContainer
+	// user := int64(0)
+	pathTypeHostDir := corev1.HostPathDirectory
 	return &corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-pod",
+			Name:      cr.ObjectMeta.Name + "-minikube",
 			Namespace: cr.Namespace,
-			Labels:    labels,
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(cr, schema.GroupVersionKind{
+					Group:   v1alpha1.SchemeGroupVersion.Group,
+					Version: v1alpha1.SchemeGroupVersion.Version,
+					Kind:    "Minikube",
+				}),
+			},
+			Labels: labels,
 		},
 		Spec: corev1.PodSpec{
+			Volumes: []corev1.Volume{
+				{
+					Name: "kvm",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/dev/kvm",
+						},
+					},
+				},
+				{
+					Name: "virsh-lib",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/lib/libvirt",
+							Type: &pathTypeHostDir,
+						},
+					},
+				},
+				{
+					Name: "virsh-run",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/run/libvirt",
+							Type: &pathTypeHostDir,
+						},
+					},
+				},
+				{
+					Name: "var-mkaas",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/mkaas",
+							Type: &pathTypeHostDir,
+						},
+					},
+				},
+			},
+			HostNetwork: true,
 			Containers: []corev1.Container{
 				{
-					Name:    "busybox",
-					Image:   "busybox",
-					Command: []string{"sleep", "3600"},
+					Name:  "libvirt",
+					Image: "alexellis2/libvirt-xenial-minikube:0.4",
+					SecurityContext: &corev1.SecurityContext{
+						Privileged: &privileged,
+					},
+					Env: []corev1.EnvVar{
+						{
+							Name:  "CLUSTER_CPUS",
+							Value: fmt.Sprintf("%d", cr.Spec.CPUCount),
+						},
+						{
+							Name:  "CLUSTER_MEMORY",
+							Value: fmt.Sprintf("%d", cr.Spec.MemoryMB),
+						},
+						{
+							Name:  "CLUSTER_NAME",
+							Value: cr.Spec.ClusterName,
+						},
+					},
+					Ports: []corev1.ContainerPort{},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							MountPath:        "/var/run/libvirt",
+							Name:             "virsh-run",
+							MountPropagation: &propagate,
+						},
+						{
+							MountPath:        "/var/lib/libvirt",
+							Name:             "virsh-lib",
+							MountPropagation: &propagate,
+						},
+						{
+							MountPath:        "/var/mkaas",
+							Name:             "var-mkaas",
+							MountPropagation: &propagate,
+						},
+					},
 				},
 			},
 		},
